@@ -1,0 +1,67 @@
+services:
+
+  traefik:
+    image: "traefik:v2.6"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:8000"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+    ports:
+      - "8000:8000"
+      - "8091:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik.yaml:/etc/traefik/dynamic/dynamic.yaml
+
+  frontend:
+    image: node:lts-slim
+    user: 1000:1000
+    expose:
+      - 5173
+    ports:
+      - 5173:5173
+    environment:
+      __VUE_PROD_DEVTOOLS__: 1
+#    env_file:
+#      - frontend/src/config.js
+#    entrypoint: /entrypoint.sh
+    command: sh -c 'npm install && npm run dev -- --host 0.0.0.0 -d'
+    working_dir: /app
+    volumes:
+#      - ./data/entrypoint_frontend.sh:/entrypoint.sh
+      - "./frontend:/app"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=5173"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.middlewares=cors-headers@file"
+
+  db:
+    image: postgres:13-bullseye
+    user: 1000:1000
+    restart: always
+#    ports:
+#      - '5432:5432/tcp'
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+      PGOPTIONS: '-c log_statement=all -c wal_level=logical -c wal_log_hints=on -c max_wal_senders=8 -c max_wal_size=1GB -c hot_standby=on'
+    volumes:
+      - ./.db/:/var/lib/postgresql/data
+      - ./tmp:/docker-entrypoint-initdb.d 
+#    command: ["postgres"]
+
+
+  adminer:
+    image: adminer
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adminer.rule=PathPrefix(`/adminer`)"
+      - "traefik.port=8084"

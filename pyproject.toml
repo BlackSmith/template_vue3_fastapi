@@ -1,0 +1,23 @@
+[project]
+name = "radius_manager"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Martin Korbel", email = "korbel@blackserver.cz"},
+]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.31.0",
+    "PyJWT[crypto]>=2.9.0",
+    "loggate>=1.11.0",
+    "requests>=2.32.3",
+    "python-socketio>=5.11.4",
+    "pyaml>=24.9.0",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false

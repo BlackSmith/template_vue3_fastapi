@@ -1,0 +1,26 @@
+http:
+  middlewares:
+    cors-headers:
+      headers:
+        accessControlAllowHeaders: "*"
+        accessControlAllowOriginList: "*"
+        accessControlAllowMethods:
+          - GET
+          - OPTIONS
+          - PUT
+          - POST
+          - DELETE
+        addVaryHeader: true
+
+  routers:
+    to-backend:
+      rule: "PathPrefix(`/socket`) || PathPrefix(`/api`) || PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`)"
+      service: backend
+      entryPoints:
+          - web
+
+  services:
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8080"
