@@ -1,9 +1,13 @@
+from datetime import datetime
+from models import ObjectNotFound
 import jwt
 import urllib3
 from fastapi import Depends
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from config import get_config
 from logging import getLogger
+from libs.db import DBPool, db_pool
+from models.user import User, UserDB, UserCreate, UserInternalUpdate
 
 logger = getLogger('keycloak')
 
@@ -14,7 +18,7 @@ KEYCLOAK_REALM = get_config('KEYCLOAK_REALM')
 KEYCLOAK_CLIENT_ID = get_config('KEYCLOAK_CLIENT_ID')
 KEYCLOAK_ALGORITHM = get_config('KEYCLOAK_ALGORITHM').split(' ')
 KEYCLOAK_SECRET_KEY = get_config('KEYCLOAK_SECRET_KEY')
-WG_COMMAND_ADMIN_ROLE = get_config('KEYCLOAK_REALM_ADMIN_ROLE')
+
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
     tokenUrl=f'{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}'
@@ -44,14 +48,11 @@ def keycloak_init():
         KEYCLOAK_SECRET_KEY = download_keycloak_cert()
 
 
-async def get_me(token: str = Depends(oauth2_scheme)) -> dict:
-    """
-    :raise jose.exceptions.ExpiredSignatureError
-    :param token:
-    :return: dict
-    :raise ExpiredSignatureError
-    """
-    res = jwt.decode(
+async def get_me(token: str = Depends(oauth2_scheme),
+                 pool: DBPool = Depends(db_pool)) -> User:
+    if not token or token == 'undefined':
+        raise jwt.ExpiredSignatureError()
+    payload = jwt.decode(
         token,
         f"-----BEGIN PUBLIC KEY-----\n"
         f"{KEYCLOAK_SECRET_KEY}\n"
@@ -59,17 +60,28 @@ async def get_me(token: str = Depends(oauth2_scheme)) -> dict:
         algorithms=KEYCLOAK_ALGORITHM,
         options={"verify_signature": True, "verify_aud": False, "exp": True}
     )
-    res_roles = res.get('resource_access', {}).get(KEYCLOAK_CLIENT_ID, {}).get('roles', [])
-    permitions = []
-    if WG_COMMAND_ADMIN_ROLE in res_roles:
-        permitions.append('admin:all')
-    return {
-        'name': res.get('name'),
-        'email': res.get('email'),
-        'preferred_username': res.get('preferred_username'),
-        'given_name': res.get('given_name'),
-        'family_name': res.get('family_name'),
-        'realm_access': res.get('realm_access', {}).get('roles', []),
-        'resource_access': res_roles,
-        'permissions': permitions
-    }
+    realm_roles = set()
+    for it in payload.get('resource_access', {}).get(KEYCLOAK_CLIENT_ID, {}).get('roles', []):
+        realm_roles.add(it)
+    for it in payload.get('realm_access', {}).get('roles', []):
+        realm_roles.add(it[1:])
+    # print(realm_roles)
+    async with pool.acquire_with_log('sql.keycloak') as db:
+        async with db.transaction():
+            try:
+                user = await UserDB.get_identity(db, 'email=$2', payload['email'], realm_roles=realm_roles)
+            except ObjectNotFound as e:
+                user = None
+            if user is None:
+                user_c = UserCreate(
+                    email=payload['email'],
+                    name=payload['name']
+                )
+                await UserDB.create(db, user_c)
+                user = await UserDB.get_identity(db, 'email=$2', payload['email'], realm_roles=realm_roles)
+        await UserDB.update(db, user, UserInternalUpdate(
+            last_logged_at=datetime.now(),
+            last_realm_roles=','.join(realm_roles) if realm_roles else None,
+            disabled=None
+        ))
+    return user

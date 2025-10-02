@@ -32,7 +32,9 @@
                 "--host", "0.0.0.0",
                 "--port", "5000",
             ],
-            "jinja": true
+            "jinja": true,
+            "python": "pdm",
+            "pythonArgs": ["run", "python"]
         }
     ]
 }

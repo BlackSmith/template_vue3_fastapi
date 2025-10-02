@@ -53,7 +53,7 @@ export default defineComponent({
                   </v-btn>
             </v-card-item>
             <v-card-text v-else>
-              <p>Check Keycloak configuration...</p>
+              <p>Loading Keycloak configuration...</p>
               <br>
               <v-progress-circular color="blue-lighten-3" indeterminate></v-progress-circular>
             </v-card-text>

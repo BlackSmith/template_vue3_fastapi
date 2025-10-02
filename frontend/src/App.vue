@@ -1,7 +1,6 @@
 <script>
-import { RouterLink, RouterView } from 'vue-router'
 import {defineComponent, ref } from "vue";
-import { useKeycloak }  from '@dsb-norge/vue-keycloak-js'
+import { checkRightToRoute } from './helpers';
 
 export default defineComponent({
   data() {
@@ -11,20 +10,8 @@ export default defineComponent({
     }
   },
   computed: {
-
     getMenuItems() {
-      const auth = this.$auth
-      function check(route) {
-        // console.log(typeof route?.meta?.permission)
-        if (route?.meta?.permission === undefined) {
-          return true
-        }
-        if (typeof route?.meta?.permission === 'function') {
-          return route.meta.permission(auth?.user?.permissions || [])
-        }
-        return auth.can(route?.meta?.permission);
-      }
-      return this.$router.options.routes.filter(route => route.meta?.menu && check(route))
+      return this.$router.options.routes.filter(route => route.meta?.menu && checkRightToRoute(this.$auth, route))
     },
     appBarHeight() {
       return this.$vuetify.display.mobile ? 64 : 0;
@@ -37,12 +24,6 @@ export default defineComponent({
     },
     navigationDrawerWidthPx() {
       return this.navigationDrawerWidth + 'px';
-    }
-  },
-  async beforeMount() {
-    if (!this.$auth.authenticated && this.$router.currentRoute.value.path !== '/') {
-      // Redirect to login page if not authenticated
-      // this.$router.push({path: '/'});
     }
   },
   methods: {

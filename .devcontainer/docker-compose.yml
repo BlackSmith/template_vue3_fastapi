@@ -26,6 +26,7 @@ services:
     depends_on:
       - frontend
 
+
   db:
     image: postgres:16
     environment:

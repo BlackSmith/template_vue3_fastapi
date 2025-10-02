@@ -25,10 +25,14 @@ function initializeTokenInterceptor () {
 }
 
 const app = createApp(App)
-app.config.globalProperties.$keycloakReady = ref(false)
 app.use(createPinia())
 app.use(VuetifyPlugin)
 const authStore = useAuthStore()
+// Global properties
+app.config.globalProperties.$api = api
+app.config.globalProperties.$auth = useAuthStore()
+app.config.globalProperties.$keycloakReady = ref(false)
+app.use(router)
 
 app.use(VueKeyCloak, {
     init: {
@@ -70,10 +74,5 @@ app.use(VueKeyCloak, {
     },
   }
 )
-
-// Global properties
-app.config.globalProperties.$api = api
-app.config.globalProperties.$auth = useAuthStore()
-app.use(router)
 
 app.mount('#app')

@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "Martin Korbel", email = "mkorbel@alps.cz"},
 ]
-dependencies = ["fastapi[standard]>=0.115.12", "pyaml>=25.1.0", "python-socketio>=5.13.0", "PyJWT[crypto]>=2.10.1", "requests>=2.32.3"]
+dependencies = ["fastapi[standard]>=0.115.12", "pyaml>=25.1.0", "python-socketio>=5.13.0", "PyJWT[crypto]>=2.10.1", "requests>=2.32.3", "loggate>=1.13.0", "asyncpg>=0.30.0"]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
@@ -13,3 +13,4 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+python.use_venv = true

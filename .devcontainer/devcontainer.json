@@ -5,19 +5,22 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "backend",
+	"remoteUser": "vscode",
 	"workspaceFolder": "/workspace",
 	"features": {
 		"ghcr.io/devcontainers-extra/features/npm-package:1": {},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers/features/python:1": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:1": {}
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers-extra/features/pdm": {}
 	},
-	"postCreateCommand": "git config --add devcontainers-theme.show-dirty 1 &&  echo \"alias ll='ls -la'\" >> ~/.bashrc && cd ./backend && pdm install -G:all",
-
+	"postCreateCommand": ".devcontainer/post-create.sh",
 	"mounts": [
 		// Your SSH key for git access
-		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind"
+		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind",
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
 	],
+
 	"customizations": {
 		"vscode": {
 			"extensions": [

@@ -4,5 +4,15 @@
     "tsconfig.json": "tsconfig.*.json, env.d.ts",
     "vite.config.*": "jsconfig*, vitest.config.*, cypress.config.*, playwright.config.*",
     "package.json": "package-lock.json, pnpm*, .yarnrc*, yarn*, .eslint*, eslint*, .oxlint*, oxlint*, .prettier*, prettier*, .editorconfig"
-  }
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/backend/src"
+  },
+  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.typeEvaluation.strictParameterNoneValue": false,
+  "python.analysis.useLibraryCodeForTypes": false,
+  "python.defaultInterpreterPath": "/usr/local/python/current/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend/__pypackages__/3.12/lib"
+  ]
 }

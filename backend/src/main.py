@@ -1,28 +1,59 @@
-import json
 import jwt
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Security, status
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
+from loggate import setup_logging, getLogger
 
-from config import get_config
+from config import get_config, to_bool
+from libs.helpers import get_yaml
 from libs.keycloak import get_me, keycloak_init
-from libs.socket import Socket
+# from libs.socket import Socket
+from libs.db import DBConnection
 
 
 SOCKET_DISABLED = get_config('SOCKET_DISABLED', wrapper=bool)
 FRONTEND_DIR = get_config('FRONTEND_DIR')
 
+logging_profiles = get_yaml(get_config('LOGGING_DEFINITIONS'))
+setup_logging(profiles=logging_profiles)
+logger = getLogger('root')
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    conn = DBConnection()
+    await conn.start()
+    try:
+        yield
+    finally:
+        await conn.stop()
+
+
 
 keycloak_init()
-app = FastAPI()
+app = FastAPI(debug=get_config('DEBUG', False, wrapper=bool), root_path='', lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_config('CORS_ALLOW_ORIGINS').split(','),
+    allow_credentials=get_config('CORS_ALLOW_CREDENTIALS', wrapper=to_bool),
+    allow_methods=get_config('CORS_ALLOW_METHODS').split(','),
+    allow_headers=get_config('CORS_ALLOW_HEADERS').split(','),
+)
 
-if not SOCKET_DISABLED:
-    socket = Socket(app)
+# if not SOCKET_DISABLED:
+#     socket = Socket(app)
 
-    @socket.event
-    async def test(sid, payload):
-        print(payload)
+#     @socket.event
+#     async def test(sid, payload):
+#         print(payload)
+
+
+from endpoints.users import router as users_router
+from endpoints.usergroups import router as usersgroups_router
+app.include_router(users_router, prefix="/api/users")
+app.include_router(usersgroups_router, prefix="/api/users-groups")
 
 
 @app.get("/")
