@@ -20,7 +20,7 @@ export const useAuthStore = defineStore("storeAuth", {
         this.clearUserData();
         return false;
       }
-      const response = await api.get('/me');
+      const response = await api.get('/api/me');
       if (response.status !== 200) {
         this.clearUserData();
         return false;

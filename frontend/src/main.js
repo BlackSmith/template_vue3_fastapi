@@ -9,6 +9,7 @@ import router from './router'
 import VuetifyPlugin from './plugins/vuetify'
 import { useAuthStore } from './stores/authStore'
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import apiStore from '@/stores/apiStore.js'
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 
@@ -51,6 +52,9 @@ app.use(VueKeyCloak, {
         console.error('Error initializing user profile:', error)
       })
       app.config.globalProperties.$keycloakReady.value = true
+      // Load openapi.json
+      app.config.globalProperties.$apiStore = apiStore()
+      app.config.globalProperties.$apiStore.loadOpenApiSchemas()
     },
     onAuthError (error) {
       console.error('Authentication error:', error)

@@ -41,7 +41,9 @@ class UserGroupDB(BaseDBModel):
         db_table = 'usergroup'
         PYDANTIC_CLASS = UserGroup
         DEFAULT_SORT_BY: str = 'name'
-        sub_columns = 'JSON_AGG(DISTINCT p.name) as permissions'
+        sub_columns = '''
+            COALESCE(JSON_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL),'[]') as permissions
+        '''
         sub_sql = 'LEFT JOIN "usergroup_permissions" p ON p.usergroup_id = f.id'
         group_by = ['f.id']
 

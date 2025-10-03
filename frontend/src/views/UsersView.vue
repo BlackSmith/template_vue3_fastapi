@@ -2,10 +2,12 @@
 import {defineComponent} from "vue";
 import Page from "@/components/page.vue";
 import Table from "@/components/table.vue";
+import {formatDate} from "@/helpers.js";
+import UserForm from './forms/userForm.vue'
 
 
 export default defineComponent({
-  components: {Page, Table},
+  components: {Page, Table, UserForm},
   props: {},
   data() {
     return {
@@ -13,6 +15,7 @@ export default defineComponent({
       selectedEvent: null,
       gridApi: null,
       rowData: null,
+      userGroups: [],
       columnDefs: [
         {headerName: 'ID', field: 'id', hide: true},
         {
@@ -21,7 +24,11 @@ export default defineComponent({
           comparator: (valueA, valueB) => {
             return getLastName(valueA).localeCompare(getLastName(valueB));
           }},
-        {headerName: 'Email', field: 'email'},
+        {
+          headerName: 'Email',
+          field: 'email',
+          maxWidth: 300
+        },
         {
           headerName: 'Logged',
           field: 'last_logged_at',
@@ -29,16 +36,29 @@ export default defineComponent({
             return params.value ? formatDate(params.value) : '';
           }, maxWidth: 200
         },
-        {headerName: 'Admin', field: 'is_admin', maxWidth: 100,},
+        {
+          headerName: 'Admin',
+          field: 'is_admin',
+          maxWidth: 100,
+          valueGetter: (params) => {
+            return params.data.permissions.includes('admin:all') ? 'Yes' : 'No';
+          }
+        },
         {
           headerName: 'User groups',
-          field: 'member_of_static',
+          field: 'member_of_ids',
           cellRenderer: 'ChipsRenderer',
           sortable: false,
           filter: false,
           valueGetter: (params) => {
-            return [].concat(params.data.member_of_static, params.data.member_of_dynamic)
-          }},
+            return this.userGroups.filter(g => params.data.member_of_static_ids?.includes(g.id) || params.data.member_of_dynamic_ids?.includes(g.id)) || [];
+          },
+          cellRendererParams: {
+            getChips: (params) => {
+              return params.data.member_of_names || [];
+            }
+          }
+        }
       ],
     }
   },
@@ -56,8 +76,10 @@ export default defineComponent({
   },
   methods: {
     async onGridReady(params) {
-      // const response = await this.$api.get('/api/users/');
-      this.rowData =  [] //response.data;
+      const responseG = await this.$api.get('/api/users-groups/');
+      this.userGroups = responseG.data;
+      const response = await this.$api.get('/api/users/');
+      this.rowData =  response.data;
       this.gridApi = params.api;
     },
     async doSelect(event) {
@@ -88,7 +110,11 @@ export default defineComponent({
   <page v-model="isDetailShown">
 
     <template #panel>
-
+      <user-form :selected="selected"
+                 @canceled="cancelDone"
+                 @updated="updateDone"
+                 @deleted="deleteDone"
+      />
     </template>
 
     <Table
