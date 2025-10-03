@@ -31,29 +31,6 @@ permissions:
             desc: |
                 If the network has set expiration of devices,
                 these users can set different expiration for the devices.
-        voucher_manage_my:
-            name: "Create vouchers"
-            required: [ device_manage_my, device_manage_all ]
-            desc: |
-                These users can create vouchers for this network & manage them.
-                They see only own vouchers.
-        voucher_read_all:
-            name: "Read all vouchers"
-            required: [ device_manage_my, device_read_all, device_manage_all ]
-            desc: |
-                These users can see all vouchers for this network.
-        voucher_manage_all:
-            name: "Manage all vouchers"
-            replacing: [ voucher_manage_my, voucher_read_all ]
-            required: [ device_manage_my, device_manage_all ]
-            desc: |
-                These users can manage all vouchers in this network.
-        voucher_unlimited:
-            name: "Multi-vouchers"
-            required: [ voucher_manage_my, voucher_manage_all ]
-            desc: |
-                These user can create a voucher for registration
-                more devices (multi-voucher) in this network.
 
 
 static_groups:

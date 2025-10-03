@@ -61,8 +61,15 @@ class UserDB(BaseDBModel):
         db_table = 'user'
         PYDANTIC_CLASS = User
         DEFAULT_SORT_BY: str = 'name'
-        sub_columns = 'JSON_AGG(DISTINCT p.name) as permissions'
-        sub_sql = 'LEFT JOIN "usergroup_permissions" p ON p.usergroup_id = f.id'
+        sub_columns = '''
+           JSON_AGG(DISTINCT ug."id") AS member_of_ids,
+           JSON_AGG(DISTINCT p.name) AS permissions
+        '''
+        sub_sql = '''
+            LEFT JOIN "usergroup_user" u ON u.user_id = f.id
+            LEFT JOIN "usergroup" ug ON ug."id" = u."usergroup_id" OR ug."realm_role" = ANY(string_to_array(f.last_realm_roles, ','))
+            LEFT JOIN "usergroup_permissions" p ON p.usergroup_id = ug.id
+        '''
         group_by = ['f.id']
 
     @classmethod

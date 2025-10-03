@@ -16,10 +16,7 @@ async def user_list(q_params: dict = Depends(query_params),
                     _user: User = Security(get_me)):
     _user.test_permission('admin:all')
     async with pool.acquire_with_log(sql_logger) as db:
-        users = await UserDB.gets(db, 'disabled IS NOT true', **q_params)
-        # for user in users:
-        #     await UserDB.load_assigns(db, user)
-        return users
+        return await UserDB.gets(db, '1=1', **q_params)
 
 
 @router.get("/{user_id}", response_model=User)
