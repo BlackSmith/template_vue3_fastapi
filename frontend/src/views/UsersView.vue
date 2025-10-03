@@ -94,12 +94,12 @@ export default defineComponent({
       this.selected = null;
     },
     updateDone(item) {
-      this.gridApi.refreshCells({rowNodes: [this.selectedEvent.node]})
+      this.gridApi.refreshCells({rowNodes: [this.selectedEvent.node], force: true})
       this.selected = null;
     },
     deleteDone(item) {
       this.rowData.splice(this.selectedEvent.rowIndex, 1)
-      this.gridApi.refreshCells({rowNodes: [this.selectedEvent.node]})
+      this.gridApi.refreshCells({rowNodes: [this.selectedEvent.node], force: true})
       this.selected = null;
     }
   }

@@ -55,11 +55,11 @@ class UserGroupDB(BaseDBModel):
 
     @classmethod
     async def assign_usergroups_to_user(cls, db: Connection, user, usergroups: Set[int]):
-        usergroups = await db.fetch(
+        usergroups_obj = await db.fetch(
             'SELECT id FROM "usergroup" WHERE id = ANY($1::int[]) AND is_assignable = true',
             list(usergroups)
         )
-        ugs = [ug['id'] for ug in usergroups]
+        ugs = [ug['id'] for ug in usergroups_obj]
         vals = [(ug, user) for ug in ugs]
         await db.executemany('''
             INSERT INTO "usergroup_user" ("usergroup_id", "user_id")
@@ -71,3 +71,5 @@ class UserGroupDB(BaseDBModel):
             DELETE FROM "usergroup_user" WHERE "user_id" = $1 AND
                 "usergroup_id" != ALL($2::int[]);
         ''', user, ugs)
+        usergroups.clear()
+        usergroups.update(ugs)

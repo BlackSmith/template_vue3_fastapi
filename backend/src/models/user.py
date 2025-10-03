@@ -70,7 +70,7 @@ class UserDB(BaseDBModel):
         sub_sql = '''
             LEFT JOIN "usergroup_user" u ON u.user_id = f.id
             LEFT JOIN "usergroup" ug ON ug."id" = u."usergroup_id"
-            LEFT JOIN "usergroup" ugd ON ugd."realm_role" = ANY(string_to_array(f.last_realm_roles, ','))
+            LEFT JOIN "usergroup" ugd ON ugd."realm_role" = ANY(string_to_array(f.last_realm_roles, ',')) OR ugd.is_default = TRUE
             LEFT JOIN "usergroup_permissions" p ON p."usergroup_id" = ug."id" OR p."usergroup_id" = ugd."id"
         '''
         group_by = ['f.id']
@@ -91,7 +91,7 @@ class UserDB(BaseDBModel):
                 FROM "user" f
                 LEFT JOIN "usergroup_user" ug_u ON ug_u."user_id" = f."id"
                 LEFT JOIN "usergroup" ug ON ug."id" = ug_u."usergroup_id"
-                LEFT JOIN "usergroup" ugd ON ugd."realm_role" = ANY($1::text[])
+                LEFT JOIN "usergroup" ugd ON ugd."realm_role" = ANY($1::text[])  OR ugd.is_default = TRUE
                 LEFT JOIN "usergroup_permissions" ug_p ON ug_p."usergroup_id" = ug."id" OR ug_p."usergroup_id" = ugd."id"
                 WHERE {query}
                 GROUP BY f.id;
@@ -109,4 +109,5 @@ class UserDB(BaseDBModel):
     @classmethod
     async def pre_update(cls, db: Connection, user: User, update: UserUpdate, **kwargs):
         if hasattr(update, "member_of_static_ids"):
-            await UserGroupDB.assign_usergroups_to_user(db, user, update.member_of_static_ids)
+            await UserGroupDB.assign_usergroups_to_user(db, user.id, update.member_of_static_ids)
+            user.member_of_static_ids = update.member_of_static_ids

@@ -87,11 +87,11 @@ export default defineComponent({
         <v-select
             v-model="selected.member_of_static_ids"
             prepend-icon="mdi-account-group"
-            :items="allUserGroups"
+            :items="allUserGroups.filter(g => g.is_assignable)"
             label="Static user's groups"
             item-title="name"
             item-value="id"
-            :return-object="true"
+            :return-object="false"
             :rules="[v => !!v || 'Please select a group']"
             chips
             multiple
